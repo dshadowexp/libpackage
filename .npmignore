@@ -1,11 +1,35 @@
-/src
-/test
-/node_modules
+# Source
+src/
+tests/
 
-.env
-.DS_Store
-
-service-account.json
-
+# Configuration files
 tsconfig.json
 tsup.config.ts
+jest.config.js
+.prettierrc
+.eslintrc
+.eslintignore
+
+# Development files
+*.test.ts
+*.spec.ts
+coverage/
+.github/
+.vscode/
+.idea/
+
+# Git files
+.git/
+.gitignore
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*

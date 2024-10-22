@@ -1,54 +1,74 @@
-import { Kafka, logLevel, Consumer, Partitioners, Producer} from "kafkajs";
+import { Kafka, logLevel, Consumer, Partitioners, Producer, EachMessagePayload} from "kafkajs";
 
-export default class KafkaService {
-    private _kafka: Kafka;
-    private _consumer: Consumer | undefined;
-    private _producer: Producer;
-    private _subs: Record<string, (data: any) => void>;
+export interface KafkaProcessorMessage {
+    key: string | undefined,
+    message: any
+}
 
-    constructor(clientId: string, brokers: string[]) {
-        this._kafka = new Kafka({
+export class KafkaClient {
+    private static _instance: KafkaClient;
+    private _client: Kafka | undefined;
+
+    private constructor() {}
+
+    public static getInstance(): KafkaClient {
+        if (!KafkaClient._instance) {
+            KafkaClient._instance = new KafkaClient();
+        }
+        return KafkaClient._instance;
+    }
+
+    public initialize(clientId: string, brokers: string[]) {
+        this._client = new Kafka({
             clientId: clientId,
             brokers: brokers,
             logLevel: logLevel.INFO
         });
+    }
 
-        this._producer = this._kafka.producer({ 
+    public get client() {
+        if (!this._client) {
+            throw new Error(`Kafka Client has not been initialized`);
+        }
+
+        return this._client;
+    }
+}
+
+export class KafkaProducer {
+    private producer: Producer;
+
+    constructor(kafkaClient: Kafka) {
+        this.producer = kafkaClient.producer({ 
             createPartitioner: Partitioners.DefaultPartitioner 
         });
+    }
 
+    async sendMessage(topic: string, message: any): Promise<void> {
+        await this.producer.connect();
+        await this.producer.send({
+            topic: topic,
+            messages: [{ value: JSON.stringify(message) }],
+        });
+        await this.producer.disconnect();
+    }
+}
+
+export class KafkaConsumer {
+    private _consumer: Consumer;
+    private _subs: Record<string, KafkaMessageProcessor>;
+
+    constructor(kafkaClient: Kafka, groupId: string) {
         this._subs = {}
-
-        const signals = ["SIGINT", "SIGTERM", "SIGQUIT"] as const;
-        signals.forEach((signal) => {
-            process.on(signal, async () => {
-                await this.destroy();
-                process.exit(0);
-            });
-        });
+        this._consumer = kafkaClient.consumer({ groupId });
+        this._consumer.connect()
+            .then(() => {
+                console.log(`Kafka Consumer connected to group ${groupId}`); 
+            })
     }
 
-    public async initProducer() {
-        await this._producer.connect();
-        console.log('Kafka Producer successfully connected');
-    }
-
-    public async produceMessage(topic: string, payload: object, key?: string) {
-        const value = JSON.stringify(payload)
-        await this._producer.send({
-            topic,
-            messages: [{ key, value}],
-        });
-    }
-
-    public async createConsumer(groupId: string) {
-        this._consumer = this._kafka.consumer({ groupId });
-        await this._consumer.connect();
-        console.log(`Kafka Consumer connected to group ${groupId}`);        
-    }
-
-    public async subscribe(topic: string, handler: (data: any) => void) {
-        this._subs[topic] = handler;
+    public async subscribe(topic: string, processor: KafkaMessageProcessor) {
+        this._subs[topic] = processor;
         await this._consumer?.subscribe({ 
             topic: topic, 
             fromBeginning: false 
@@ -63,22 +83,28 @@ export default class KafkaService {
                     return;
                 }
 
-                const data = {
+                const data: KafkaProcessorMessage = {
                     key: message.key?.toString(),
                     message: JSON.parse(message.value!.toString())
                 }
                 
-                const topicHandler = this._subs[topic];
+                const topicMessageProcessor = this._subs[topic];
 
-                if (topicHandler) {
-                    topicHandler(data);
+                if (topicMessageProcessor) {
+                    topicMessageProcessor.processMessage(data);
                 }
             }
         });
     }
 
     public async destroy() {
-        await this._producer.disconnect();
         await this._consumer?.disconnect();
     }
+}
+
+export abstract class KafkaMessageProcessor {
+    protected constructor(public readonly topic: string) {}
+
+    abstract validateMessage(message: any): boolean;
+    abstract processMessage(message: KafkaProcessorMessage): Promise<void>
 }

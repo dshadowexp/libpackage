@@ -86,7 +86,7 @@ export const notFound: RequestHandler = (req: Request, res: Response, next: Next
  * @param logger - The logger instance.
  * @returns A middleware function that logs the error and sends a 500 response.
  */
-export const error = (logger: Logger) => (err: Error, req: Request, res: Response, next: NextFunction) => {
+export const error: ErrorRequestHandler = (logger: Logger) => (err: Error, req: Request, res: Response, next: NextFunction) => {
     logger.error(err.stack);
     res.status(500).json({ error: 'Internal Server Error' });
 };

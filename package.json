@@ -1,6 +1,6 @@
 {
-  "name": "lib",
-  "version": "0.0.21",
+  "name": "@tuller/lib",
+  "version": "0.0.24",
   "description": "common used methods",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

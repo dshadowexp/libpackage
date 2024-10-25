@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf ./dist",
-    "test": "npx tsx --test ./test/**/*.test.ts",
+    "test": "npx tsx --test ./src/**/*.test.ts",
     "deploy": "npm publish --access public"
   },
   "keywords": [],

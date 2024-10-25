@@ -14,7 +14,6 @@ interface MockRequest extends Partial<Request> {
     };
 }
 
-// Updated MockResponse to better match Express's Response type
 interface MockResponse {
     statusCode?: number;
     body?: any;

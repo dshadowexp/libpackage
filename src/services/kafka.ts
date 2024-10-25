@@ -1,6 +1,6 @@
 import { Kafka, logLevel, Consumer, Partitioners, Producer, EachMessagePayload} from "kafkajs";
 
-export interface KafkaProcessorMessage {
+export interface ProcessorMessageData {
     key: string | undefined,
     message: any
 }
@@ -67,13 +67,13 @@ export class KafkaConsumer {
             })
     }
 
-    public async subscribe(topic: string, processor: KafkaMessageProcessor) {
-        this._subs[topic] = processor;
+    public async subscribe(processor: KafkaMessageProcessor) {
+        this._subs[processor.topic] = processor;
         await this._consumer?.subscribe({ 
-            topic: topic, 
+            topic: processor.topic, 
             fromBeginning: false 
         });
-        console.log(`Kafka Consumer subscribed to topic ${topic}`);
+        console.log(`Kafka Consumer subscribed to topic ${processor.topic}`);
     }
 
     public async consumeMessages() {
@@ -83,7 +83,7 @@ export class KafkaConsumer {
                     return;
                 }
 
-                const data: KafkaProcessorMessage = {
+                const data: ProcessorMessageData = {
                     key: message.key?.toString(),
                     message: JSON.parse(message.value!.toString())
                 }
@@ -104,7 +104,6 @@ export class KafkaConsumer {
 
 export abstract class KafkaMessageProcessor {
     protected constructor(public readonly topic: string) {}
-
     abstract validateMessage(message: any): boolean;
-    abstract processMessage(message: KafkaProcessorMessage): Promise<void>
+    abstract processMessage(message: ProcessorMessageData): Promise<void>
 }

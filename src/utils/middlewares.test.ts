@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { it, describe, mock } from 'node:test';
 import { Request, Response, NextFunction } from 'express';
-import { authenticate } from '../../src/utils/middlewares';  // Adjust path as needed
+import { authenticate } from './middlewares';  // Adjust path as needed
 
 // Type definitions
 interface MockRequest extends Partial<Request> {

@@ -104,6 +104,6 @@ export class KafkaConsumer {
 
 export abstract class KafkaMessageProcessor {
     protected constructor(public readonly topic: string) {}
-    abstract validateMessage(message: any): boolean;
+    abstract validateMessage(message: any): void;
     abstract processMessage(message: ProcessorMessageData): Promise<void>
 }

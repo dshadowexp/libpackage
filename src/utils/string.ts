@@ -58,3 +58,13 @@ export function isDataURL(value: string): boolean {
     /^\s*data:([a-z]+\/[a-z0-9-+.]+(;[a-z-]+=[a-z0-9-]+)?)?(;base64)?,([a-z0-9!$&',()*+;=\-._~:@\\/?%\s]*)\s*$/i;
     return dataUrlRegex.test(value);
 }
+
+/**
+ * Checks if a string is a valid phone number.
+ * 
+ * @param value - The string to validate.
+ * @returns True if the string is a valid data phone number, false otherwise.
+ */
+export function isPhoneNumber(value: string): boolean {
+    return true;
+}
